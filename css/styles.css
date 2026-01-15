@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0b1220;
+  color: #e5e7eb;
+}
+
+#app {
+  padding: 20px;
+}
+
+input, button {
+  padding: 10px;
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+button {
+  cursor: pointer;
+}
+
+pre {
+  background: #020617;
+  padding: 10px;
+  margin-top: 20px;
+  overflow: auto;
+}
