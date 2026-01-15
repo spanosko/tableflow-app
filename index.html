@@ -1,0 +1,1249 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TABLEFLOW – Local Cloud UI</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --text:#0b1220;
+      --muted:#475569;
+      --border:#e5e7eb;
+      --primary:#2563eb;
+
+      --cols: 6;
+      --gap: 18px;
+      --cellH: 210px;
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:system-ui,Arial;background:var(--bg);color:var(--text);}
+    .wrap{max-width:1200px;margin:0 auto;padding:18px;}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+    .brand{font-weight:900;font-size:20px;letter-spacing:1px;}
+    .brand span{color:var(--primary);}
+
+    .btn{border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;}
+    .btn.primary{background:var(--primary);color:#fff;}
+    .btn.dark{background:#111827;color:#fff;}
+    .btn.ghost{background:#fff;border:1px solid var(--border);color:#0b1220;}
+    .btn.small{padding:6px 8px;border-radius:10px;font-size:12px;line-height:1;}
+    .btn.warn{background:#f59e0b;color:#111827;}
+    .btn.danger{background:#ef4444;color:#fff;}
+    .btn.ok{background:#10b981;color:#062b1e;}
+    .btn:disabled{opacity:.45;cursor:not-allowed;}
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-top:12px;}
+    label{display:block;font-size:12px;color:#334155;font-weight:800;margin-top:10px;}
+    input, select, textarea{
+      width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:12px;
+      font-size:14px;background:#fff;
+    }
+    textarea{min-height:84px;resize:vertical;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;}
+    .row>div{flex:1 1 260px;min-width:260px;}
+    .status{margin-top:10px;font-weight:900;}
+    .ok{color:#065f46;}
+    .bad{color:#991b1b;}
+    .muted{color:var(--muted);font-size:13px;}
+
+    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+    .tab{padding:10px 14px;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer;font-weight:900;}
+    .tab.active{border-color:var(--primary);outline:2px solid rgba(37,99,235,.2);}
+
+    .gridWrap{margin-top:12px;}
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+      grid-auto-rows: var(--cellH);
+      gap: var(--gap);
+      background:#eef2f7;
+      border-radius:16px;
+      padding:14px;
+      border:1px solid var(--border);
+    }
+    .cell{min-width:0;}
+    .tableCard{
+      height:100%;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+      box-shadow:0 6px 18px rgba(0,0,0,.05);
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+      gap:8px;
+      overflow:hidden;
+      position:relative;
+      user-select:none;
+      cursor:pointer;
+    }
+    .tableCard:hover{outline:2px solid rgba(37,99,235,.15);}
+
+    .tTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+    .tNo{font-weight:1000;font-size:16px;}
+    .tSeats{font-size:12px;color:var(--muted);font-weight:800;}
+
+    .badge{
+      font-size:12px;font-weight:1000;
+      padding:4px 10px;border-radius:999px;
+      background:#eef2ff;color:#1e3a8a;border:1px solid #dbeafe;
+      white-space:nowrap;
+    }
+    .badge.free{background:#ecfeff;color:#0369a1;border-color:#bae6fd;}
+    .badge.pending{background:#fef3c7;color:#92400e;border-color:#fde68a;}
+    .badge.arrived{background:#dcfce7;color:#065f46;border-color:#bbf7d0;}
+    .badge.ended{background:#e2e8f0;color:#0f172a;border-color:#cbd5e1;}
+    .badge.noshow{background:#fee2e2;color:#7f1d1d;border-color:#fecaca;}
+    .badge.cancelled{background:#f1f5f9;color:#334155;border-color:#cbd5e1;}
+
+    .rightBox{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:nowrap;
+    }
+    .miniSelect{
+      width:auto;
+      padding:4px 6px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      font-size:12px;
+      background:#fff;
+    }
+
+    .line{
+      font-size:12px;font-weight:900;
+      white-space:normal;
+      overflow:hidden;
+      background:rgba(37,99,235,.10);
+      border-radius:10px;padding:6px 8px;
+    }
+    .line.arrived{background:rgba(16,185,129,.18);}
+    .line.pending{background:rgba(245,158,11,.22);}
+    .tiny{font-size:11px;color:var(--muted);}
+
+    pre{background:#0b1220;color:#e5e7eb;border-radius:16px;padding:12px;overflow:auto;font-size:12px;margin-top:12px;}
+    .actionsRow{display:flex;gap:8px;flex-wrap:wrap;}
+
+    /* ===== Modal ===== */
+    .backdrop{
+      position:fixed; inset:0;
+      background:rgba(15,23,42,.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:9999;
+    }
+    .backdrop.show{display:flex;}
+    .modal{
+      width:min(980px, 100%);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:0 18px 60px rgba(0,0,0,.25);
+      padding:14px;
+      max-height: 88vh;
+      overflow:auto;
+    }
+    .mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+    .mtitle{font-weight:1000;font-size:16px;line-height:1.1;}
+    .msub{color:var(--muted);font-size:12px;margin-top:4px;}
+    .mclose{border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 10px;font-weight:1000;cursor:pointer;}
+    .mclose:hover{background:#f1f5f9;}
+    .hint{
+      background:#f1f5f9;border:1px dashed #cbd5e1;color:#0b1220;
+      border-radius:14px;padding:10px;font-size:12px;margin-top:10px;
+    }
+    .mfooter{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+    .mfooter .btn{flex:1 1 180px;}
+
+    .list{margin-top:12px;display:flex;flex-direction:column;gap:10px;}
+    .item{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .itemTop{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+    }
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;font-size:11px;color:var(--muted);}
+
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap:12px;
+      margin-top:12px;
+    }
+    @media (max-width: 860px){
+      .twoCol{grid-template-columns: 1fr;}
+    }
+
+    .crmPanel{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+    }
+    .crmPanel .t{font-weight:1000;margin-bottom:6px;}
+    .crmPanel .s{font-size:12px;color:var(--muted);line-height:1.4;}
+
+    .tablesPick{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+      margin-top:10px;
+    }
+    .tablesPick .t{font-weight:1000;margin-bottom:6px;}
+    .chkGrid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap:8px;
+    }
+    @media (max-width: 860px){
+      .chkGrid{grid-template-columns: repeat(2, minmax(0,1fr));}
+    }
+    .chk{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:8px;
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+      background:#fff;
+    }
+    .chk input{width:auto; margin-top:2px;}
+    .chk .k{font-weight:1000;font-size:13px;}
+    .chk .m{font-size:12px;color:var(--muted);}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="brand">TABLE<span>FLOW</span></div>
+      <div class="muted">LOCAL μέχρι να περάσει DNS — όλα τα rules on</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn dark" onclick="logout()">Logout</button>
+      <button class="btn primary" onclick="refreshAll()">Refresh</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 8px 0;">Σύνδεση</h3>
+    <div class="row">
+      <div>
+        <label>SUPABASE_URL</label>
+        <input id="supabaseUrl" placeholder="https://xxxxx.supabase.co">
+      </div>
+      <div>
+        <label>Publishable Key (sb_publishable_...)</label>
+        <input id="supabaseKey" placeholder="sb_publishable_...">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Email</label>
+        <input id="email" placeholder="owner@...">
+      </div>
+      <div>
+        <label>Password</label>
+        <input id="password" type="password" placeholder="password">
+      </div>
+      <div style="flex:0 0 auto;min-width:220px;">
+        <label>&nbsp;</label>
+        <button class="btn primary" onclick="login()">Login</button>
+      </div>
+    </div>
+    <div id="status" class="status muted">Not logged in.</div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 8px 0;">Παράθυρο (ημέρα / ώρα)</h3>
+    <div class="row">
+      <div>
+        <label>Ημερομηνία</label>
+        <input id="dateKey" placeholder="YYYY-MM-DD">
+      </div>
+      <div>
+        <label>Έναρξη</label>
+        <select id="startHH"></select>
+      </div>
+      <div>
+        <label>Λήξη</label>
+        <select id="endHH"></select>
+      </div>
+      <div style="flex:0 0 auto;min-width:220px;">
+        <label>&nbsp;</label>
+        <button class="btn primary" onclick="refreshAll()">Υπολογισμός</button>
+      </div>
+    </div>
+    <div class="tiny">Κανόνας: ίδιο τραπέζι + overlap => ΟΧΙ. Non-overlap => ΝΑΙ. Default duration 3 ώρες.</div>
+  </div>
+
+  <div class="tabs" id="floorTabs"></div>
+
+  <div class="gridWrap">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:1000;">Πλάνο</div>
+        <div class="muted" id="metaLine">—</div>
+      </div>
+      <div class="tiny" id="counts">—</div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <details style="margin-top:12px;">
+    <summary style="cursor:pointer;font-weight:900;">Raw debug</summary>
+    <pre id="raw"></pre>
+  </details>
+</div>
+
+<!-- ===== TABLE LIST MODAL ===== -->
+<div class="backdrop" id="tableBackdrop" onclick="backdropClick(event,'tableBackdrop',closeTableModal)">
+  <div class="modal">
+    <div class="mhead">
+      <div>
+        <div class="mtitle" id="tTitle">Κρατήσεις τραπεζιού</div>
+        <div class="msub" id="tSub">—</div>
+      </div>
+      <button class="mclose" onclick="closeTableModal()">✕</button>
+    </div>
+
+    <div class="hint" id="tHint">—</div>
+    <div class="mfooter">
+      <button class="btn ghost" onclick="openCreateFromTableModal()">Νέα κράτηση σε αυτό το τραπέζι</button>
+      <button class="btn primary" onclick="refreshAll().then(()=>renderTableModalFromCache())">Refresh list</button>
+      <button class="btn ghost" onclick="closeTableModal()">Close</button>
+    </div>
+
+    <div class="list" id="tList"></div>
+  </div>
+</div>
+
+<!-- ===== CREATE MODAL ===== -->
+<div class="backdrop" id="createBackdrop" onclick="backdropClick(event,'createBackdrop',closeCreate)">
+  <div class="modal">
+    <div class="mhead">
+      <div>
+        <div class="mtitle" id="cTitle">Νέα κράτηση</div>
+        <div class="msub" id="cSub">—</div>
+      </div>
+      <button class="mclose" onclick="closeCreate()">✕</button>
+    </div>
+
+    <div class="hint" id="cHint">—</div>
+
+    <div class="twoCol">
+      <div class="card" style="margin-top:0;">
+        <h3 style="margin:0 0 8px;">Στοιχεία κράτησης</h3>
+
+        <label>Ημερομηνία</label>
+        <input id="cr_date" disabled />
+
+        <div class="row">
+          <div>
+            <label>Start</label>
+            <select id="cr_start"></select>
+          </div>
+          <div>
+            <label>End</label>
+            <select id="cr_end"></select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Άτομα (pax)</label>
+            <input id="cr_pax" type="number" min="1" step="1" value="2" />
+          </div>
+          <div>
+            <label>Όνομα</label>
+            <input id="cr_name" placeholder="Όνομα" />
+          </div>
+        </div>
+
+        <label>Τηλέφωνο</label>
+        <input id="cr_phone" placeholder="π.χ. 6947..." />
+
+        <label>Σημείωση</label>
+        <textarea id="cr_note" placeholder="Σημείωση"></textarea>
+
+        <div class="tablesPick">
+          <div class="t">Τραπέζια κράτησης (μπορείς 2–3–4)</div>
+          <div class="tiny" id="cr_tablesHint">—</div>
+          <div class="chkGrid" id="cr_tablesGrid"></div>
+        </div>
+
+        <div class="mfooter">
+          <button class="btn primary" onclick="createReservation()">Create</button>
+          <button class="btn ghost" onclick="closeCreate()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="crmPanel">
+        <div class="t">CRM (auto)</div>
+        <div class="s" id="crmAuto">Γράψε τηλέφωνο για αυτόματο lookup…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =========================
+  // STATE
+  // =========================
+  let ACCESS_TOKEN = "";
+  let FLOORS = [];
+  let TABLES = [];
+  let OCC = [];
+  let ACTIVE_FLOOR_ID = "";
+
+  // Dropdown selection per table_token
+  const SELECTED_RID = new Map();
+
+  // Modals
+  let TABLE_MODAL = null;
+  let CREATE_CTX = null; // { venue_id, table_id, table_label, floor_name }
+
+  // CRM debounce
+  let CRM_TIMER = null;
+  let CRM_LAST = null;
+
+  // Multi-table selection in Create modal
+  const CREATE_SELECTED_TABLE_IDS = new Set();
+
+  // Constants
+  const DEFAULT_DURATION_MIN = 180; // 3 ώρες
+  const GAP_MIN = 15;
+
+  // =========================
+  // HELPERS
+  // =========================
+  function cfg(){
+    return {
+      url: document.getElementById("supabaseUrl").value.trim(),
+      key: document.getElementById("supabaseKey").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      pass: document.getElementById("password").value,
+      dateKey: document.getElementById("dateKey").value.trim(),
+      startHH: document.getElementById("startHH").value,
+      endHH: document.getElementById("endHH").value
+    };
+  }
+
+  function setStatus(html, ok=false){
+    const el = document.getElementById("status");
+    el.className = "status " + (ok ? "ok" : "muted");
+    el.innerHTML = html;
+  }
+
+  function setRaw(obj){
+    document.getElementById("raw").textContent = JSON.stringify(obj, null, 2);
+  }
+
+  function backdropClick(ev, id, closeFn){
+    if(ev.target && ev.target.id === id) closeFn();
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  function getVenueId(){
+    return FLOORS?.[0]?.venue_id || null;
+  }
+
+  async function postRpc(fnName, bodyObj){
+    const c = cfg();
+    const url = `${c.url}/rest/v1/rpc/${fnName}`;
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "apikey": c.key,
+        "Authorization": `Bearer ${ACCESS_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(bodyObj)
+    });
+    const json = await resp.json();
+    return { resp, json };
+  }
+
+  function fillTimeSelectors(selEl, startH=12, endH=23){
+    selEl.innerHTML = "";
+    for(let h=startH; h<=endH; h++){
+      for(let m=0; m<60; m+=30){
+        const hh = String(h).padStart(2,"0");
+        const mm = String(m).padStart(2,"0");
+        const t = `${hh}:${mm}`;
+        const o = document.createElement("option");
+        o.value = t; o.textContent = t;
+        selEl.appendChild(o);
+      }
+    }
+  }
+
+  function initMainTimeSelectors(){
+    fillTimeSelectors(document.getElementById("startHH"), 12, 23);
+    fillTimeSelectors(document.getElementById("endHH"), 12, 23);
+    document.getElementById("startHH").value = "18:00";
+    document.getElementById("endHH").value = "23:00";
+  }
+
+  function toIsoLocal(dateKey, hhmm){
+    const dt = new Date(`${dateKey}T${hhmm}:00`);
+    if(Number.isNaN(dt.getTime())) throw new Error(`Invalid datetime: ${dateKey} ${hhmm}`);
+    return dt.toISOString();
+  }
+
+  function addMinutesToHHMM(hhmm, minutes){
+    const [hh, mm] = hhmm.split(":").map(x=>parseInt(x,10));
+    const base = hh*60 + mm;
+    const next = base + minutes;
+    const nh = Math.floor(next/60);
+    const nm = next%60;
+    return `${String(nh).padStart(2,"0")}:${String(nm).padStart(2,"0")}`;
+  }
+
+  // =========================
+  // AUTH
+  // =========================
+  async function login(){
+    const c = cfg();
+    if(!c.url || !c.key || !c.email || !c.pass){
+      setStatus("<span class='bad'>Λείπουν στοιχεία.</span>");
+      return;
+    }
+    setStatus("⏳ Logging in...");
+
+    const resp = await fetch(`${c.url}/auth/v1/token?grant_type=password`, {
+      method:"POST",
+      headers: { "apikey": c.key, "Content-Type":"application/json" },
+      body: JSON.stringify({ email:c.email, password:c.pass })
+    });
+    const json = await resp.json();
+    if(!resp.ok){
+      setRaw({ login_error: json });
+      setStatus("<span class='bad'>Login failed.</span>");
+      return;
+    }
+    ACCESS_TOKEN = json.access_token;
+    setStatus("✅ Logged in.", true);
+    await refreshAll();
+  }
+
+  function logout(){
+    ACCESS_TOKEN = "";
+    FLOORS = []; TABLES = []; OCC = []; ACTIVE_FLOOR_ID = "";
+    SELECTED_RID.clear();
+    TABLE_MODAL = null;
+    CREATE_CTX = null;
+    CRM_LAST = null;
+    CREATE_SELECTED_TABLE_IDS.clear();
+
+    document.getElementById("floorTabs").innerHTML = "";
+    document.getElementById("grid").innerHTML = "";
+    document.getElementById("metaLine").textContent = "—";
+    document.getElementById("counts").textContent = "—";
+    setRaw({});
+    closeTableModal();
+    closeCreate();
+    setStatus("Not logged in.");
+  }
+
+  // =========================
+  // ACTIONS
+  // =========================
+  function badgeClassForStatus(st){
+    if(st === "ARRIVED") return "arrived";
+    if(st === "ENDED") return "ended";
+    if(st === "NO_SHOW") return "noshow";
+    if(st === "CANCELLED") return "cancelled";
+    return "pending";
+  }
+  function canAction(st, action){
+    if(action === "ARRIVED") return st === "PENDING";
+    if(action === "END") return st === "PENDING" || st === "ARRIVED";
+    if(action === "NO_SHOW") return st === "PENDING";
+    if(action === "CANCEL") return st === "PENDING";
+    return false;
+  }
+
+  async function runAction(reservationId, action){
+    if(!ACCESS_TOKEN){ alert("Κάνε login πρώτα."); return; }
+    const ok = confirm(`Ενέργεια: ${action}\nreservation_id:\n${reservationId}\n\nOK?`);
+    if(!ok) return;
+
+    setStatus(`⏳ Action ${action}...`, true);
+    const { resp, json } = await postRpc("rpc_reservation_action", {
+      p_reservation_id: reservationId,
+      p_action: action,
+      p_note: null
+    });
+
+    if(!resp.ok){
+      setRaw({ action_error: json, reservation_id: reservationId, action });
+      setStatus("<span class='bad'>Action failed.</span>");
+      alert("Action failed. Δες Raw debug.");
+      return;
+    }
+
+    setRaw({ action_ok: json, reservation_id: reservationId, action });
+    await refreshAll();
+    setStatus("✅ Loaded.", true);
+
+    if(TABLE_MODAL) renderTableModalFromCache();
+  }
+
+  // =========================
+  // TABLE LIST MODAL
+  // =========================
+  function openTableModal(table_token){
+    const c = cfg();
+    const floorName = FLOORS.find(x=>x.floor_id===ACTIVE_FLOOR_ID)?.floor_name || "";
+    TABLE_MODAL = { table_token: String(table_token), floor_name: floorName, date_key: c.dateKey, start_hhmm: c.startHH, end_hhmm: c.endHH };
+
+    document.getElementById("tTitle").textContent = `Κρατήσεις — Τραπέζι ${TABLE_MODAL.table_token}`;
+    document.getElementById("tSub").textContent = `Ζώνη: ${floorName}`;
+    document.getElementById("tHint").textContent = `Window: ${TABLE_MODAL.date_key} ${TABLE_MODAL.start_hhmm} → ${TABLE_MODAL.end_hhmm}`;
+
+    document.getElementById("tableBackdrop").classList.add("show");
+    renderTableModalFromCache();
+  }
+  function closeTableModal(){
+    document.getElementById("tableBackdrop").classList.remove("show");
+    TABLE_MODAL = null;
+    document.getElementById("tList").innerHTML = "";
+  }
+  function openCreateFromTableModal(){
+    if(!TABLE_MODAL) return;
+    const tok = TABLE_MODAL.table_token;
+    const tableRow = TABLES.find(t => String(t.label) === tok);
+    if(!tableRow){ alert("Δεν βρήκα table_id για αυτό το token."); return; }
+    openCreateModalForTable(tableRow);
+  }
+
+  function renderTableModalFromCache(){
+    if(!TABLE_MODAL) return;
+
+    const tok = TABLE_MODAL.table_token;
+    const items = OCC.filter(o => String(o.table_token) === tok);
+
+    const list = document.getElementById("tList");
+    list.innerHTML = "";
+
+    if(!items.length){
+      list.innerHTML = `<div class="muted">Δεν υπάρχουν κρατήσεις για αυτό το τραπέζι στο τρέχον window.</div>`;
+      return;
+    }
+
+    items.sort((a,b) => (a.status === "ARRIVED" ? -1 : 0) - (b.status === "ARRIVED" ? -1 : 0));
+
+    for(const occ of items){
+      const div = document.createElement("div");
+      div.className = "item";
+
+      const top = document.createElement("div");
+      top.className = "itemTop";
+
+      const left = document.createElement("div");
+      left.innerHTML = `
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span class="badge ${badgeClassForStatus(occ.status)}">${escapeHtml(occ.status)}</span>
+          <span style="font-weight:1000;">${escapeHtml(occ.start_hhmm)}-${escapeHtml(occ.end_hhmm)} ${escapeHtml(occ.name)} (${escapeHtml(occ.pax)})</span>
+        </div>
+        <div class="mono">reservation_id: ${escapeHtml(occ.reservation_id)}</div>
+      `;
+
+      const actions = document.createElement("div");
+      actions.className = "actionsRow";
+
+      const btnArr = document.createElement("button");
+      btnArr.className = "btn small ok";
+      btnArr.textContent = "ARRIVED";
+      btnArr.disabled = !canAction(occ.status, "ARRIVED");
+      btnArr.onclick = async () => { await runAction(occ.reservation_id, "ARRIVED"); };
+
+      const btnEnd = document.createElement("button");
+      btnEnd.className = "btn small dark";
+      btnEnd.textContent = "END";
+      btnEnd.disabled = !canAction(occ.status, "END");
+      btnEnd.onclick = async () => { await runAction(occ.reservation_id, "END"); };
+
+      const btnNo = document.createElement("button");
+      btnNo.className = "btn small warn";
+      btnNo.textContent = "NO_SHOW";
+      btnNo.disabled = !canAction(occ.status, "NO_SHOW");
+      btnNo.onclick = async () => { await runAction(occ.reservation_id, "NO_SHOW"); };
+
+      const btnCan = document.createElement("button");
+      btnCan.className = "btn small danger";
+      btnCan.textContent = "CANCEL";
+      btnCan.disabled = !canAction(occ.status, "CANCEL");
+      btnCan.onclick = async () => { await runAction(occ.reservation_id, "CANCEL"); };
+
+      actions.appendChild(btnArr);
+      actions.appendChild(btnEnd);
+      actions.appendChild(btnNo);
+      actions.appendChild(btnCan);
+
+      top.appendChild(left);
+      top.appendChild(actions);
+
+      div.appendChild(top);
+      list.appendChild(div);
+    }
+  }
+
+  // =========================
+  // CREATE MODAL (single + multi)
+  // =========================
+  function closeCreate(){
+    document.getElementById("createBackdrop").classList.remove("show");
+    CREATE_CTX = null;
+    CREATE_SELECTED_TABLE_IDS.clear();
+    if(CRM_TIMER) clearTimeout(CRM_TIMER);
+    CRM_TIMER = null;
+  }
+
+  function buildCreateTablesPicker(){
+    const gridEl = document.getElementById("cr_tablesGrid");
+    gridEl.innerHTML = "";
+
+    const floorTables = TABLES.filter(t => t.floor_id === ACTIVE_FLOOR_ID);
+    const hintEl = document.getElementById("cr_tablesHint");
+
+    hintEl.textContent = `Διάλεξε 1+ τραπέζια. Κανόνας: overlap/ίδια ώρα => ΟΧΙ. Gap=${GAP_MIN}’.`;
+
+    for(const t of floorTables){
+      const wrap = document.createElement("label");
+      wrap.className = "chk";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = CREATE_SELECTED_TABLE_IDS.has(t.table_id);
+      cb.onchange = () => {
+        if(cb.checked) CREATE_SELECTED_TABLE_IDS.add(t.table_id);
+        else CREATE_SELECTED_TABLE_IDS.delete(t.table_id);
+      };
+
+      const text = document.createElement("div");
+      text.innerHTML = `<div class="k">Τρ. ${escapeHtml(t.label)}</div><div class="m">${escapeHtml(t.seats||"")} άτομα</div>`;
+
+      wrap.appendChild(cb);
+      wrap.appendChild(text);
+      gridEl.appendChild(wrap);
+    }
+  }
+
+  function openCreateModalForTable(tableRow){
+    const c = cfg();
+    const floorName = FLOORS.find(x=>x.floor_id===tableRow.floor_id)?.floor_name || "";
+
+    CREATE_CTX = {
+      venue_id: tableRow.venue_id,
+      table_id: tableRow.table_id,
+      table_label: String(tableRow.label),
+      floor_name: floorName
+    };
+
+    document.getElementById("cTitle").textContent = `Νέα κράτηση — Τραπέζι ${CREATE_CTX.table_label}`;
+    document.getElementById("cSub").textContent = `Ζώνη: ${floorName}`;
+    document.getElementById("cHint").textContent = `Default διάρκεια 3 ώρες. Multi-table για μεγάλες παρέες.`;
+
+    document.getElementById("cr_date").value = c.dateKey || "";
+
+    fillTimeSelectors(document.getElementById("cr_start"), 12, 23);
+    fillTimeSelectors(document.getElementById("cr_end"), 12, 23);
+
+    document.getElementById("cr_start").value = c.startHH || "18:00";
+    // default end = start + 180'
+    document.getElementById("cr_end").value = addMinutesToHHMM(document.getElementById("cr_start").value, DEFAULT_DURATION_MIN);
+
+    document.getElementById("cr_start").onchange = () => {
+      // όταν αλλάζει start, προτείνουμε end=start+180
+      document.getElementById("cr_end").value = addMinutesToHHMM(document.getElementById("cr_start").value, DEFAULT_DURATION_MIN);
+    };
+
+    document.getElementById("cr_pax").value = "2";
+    document.getElementById("cr_name").value = "";
+    document.getElementById("cr_phone").value = "";
+    document.getElementById("cr_note").value = "";
+    document.getElementById("crmAuto").textContent = "Γράψε τηλέφωνο για αυτόματο lookup…";
+    CRM_LAST = null;
+
+    CREATE_SELECTED_TABLE_IDS.clear();
+    CREATE_SELECTED_TABLE_IDS.add(tableRow.table_id);
+    buildCreateTablesPicker();
+
+    // CRM auto lookup
+    const phoneEl = document.getElementById("cr_phone");
+    phoneEl.oninput = () => {
+      if(CRM_TIMER) clearTimeout(CRM_TIMER);
+      CRM_TIMER = setTimeout(() => crmAutoLookup(), 350);
+    };
+
+    document.getElementById("createBackdrop").classList.add("show");
+    setTimeout(()=>phoneEl.focus(), 0);
+  }
+
+  async function crmAutoLookup(){
+    try{
+      const vid = getVenueId();
+      if(!vid || !ACCESS_TOKEN) return;
+
+      const phone = document.getElementById("cr_phone").value.trim();
+      if(!phone){
+        document.getElementById("crmAuto").textContent = "Γράψε τηλέφωνο για αυτόματο lookup…";
+        CRM_LAST = null;
+        return;
+      }
+
+      const { resp, json } = await postRpc("rpc_crm_lookup", {
+        p_venue_id: vid,
+        p_phone: phone
+      });
+
+      if(!resp.ok){
+        document.getElementById("crmAuto").textContent = "CRM lookup error.";
+        return;
+      }
+
+      CRM_LAST = json;
+
+      const nameEl = document.getElementById("cr_name");
+      const noteEl = document.getElementById("cr_note");
+
+      if(json.found){
+        if(!nameEl.value.trim()) nameEl.value = json.name || "";
+        if(!noteEl.value.trim()) noteEl.value = json.note || "";
+      }
+
+      document.getElementById("crmAuto").innerHTML =
+        `found=<b>${json.found}</b><br>` +
+        `phoneNorm=${escapeHtml(json.phoneNorm||"")}<br>` +
+        `visits=${escapeHtml(json.visits||0)} | noShows=${escapeHtml(json.noShows||0)}<br>` +
+        `lastVisit=${escapeHtml(json.lastVisit||"-")}<br>` +
+        `lastNoShow=${escapeHtml(json.lastNoShow||"-")}`;
+
+    } catch(e){
+      document.getElementById("crmAuto").textContent = "CRM lookup exception.";
+    }
+  }
+
+  function precheckClientConflict(selectedTokens, startHH, endHH){
+    // client-side precheck using current OCC list (for speed)
+    // server remains source of truth.
+    const s = startHH;
+    const e = endHH;
+
+    const toMin = (hhmm)=> {
+      const [h,m]=hhmm.split(":").map(x=>parseInt(x,10));
+      return h*60+m;
+    };
+    const sMin = toMin(s);
+    const eMin = toMin(e);
+
+    // Apply gap on client as well
+    const gap = GAP_MIN;
+    const sMinAdj = sMin - gap;
+    const eMinAdj = eMin + gap;
+
+    for(const o of OCC){
+      if(!selectedTokens.includes(String(o.table_token))) continue;
+      if(!(o.status === "PENDING" || o.status === "ARRIVED")) continue;
+
+      const os = toMin(o.start_hhmm);
+      const oe = toMin(o.end_hhmm);
+
+      // overlap with gap
+      if(os < eMinAdj && oe > sMinAdj){
+        return `CONFLICT στο τραπέζι ${o.table_token} (${o.start_hhmm}-${o.end_hhmm}).`;
+      }
+    }
+    return "";
+  }
+
+  async function createReservation(){
+    if(!ACCESS_TOKEN){ alert("Κάνε login πρώτα."); return; }
+    if(!CREATE_CTX){ alert("Missing create context."); return; }
+
+    const c = cfg();
+    const dateKey = c.dateKey;
+
+    const startHH = document.getElementById("cr_start").value;
+    const endHH = document.getElementById("cr_end").value;
+
+    // basic validate
+    if(endHH <= startHH){
+      alert("Το END πρέπει να είναι μετά το START.");
+      return;
+    }
+
+    const pax = parseInt(document.getElementById("cr_pax").value, 10) || 2;
+    const name = document.getElementById("cr_name").value.trim() || "—";
+    const phone = document.getElementById("cr_phone").value.trim() || "";
+    const note = document.getElementById("cr_note").value.trim() || "";
+
+    // Selected tables
+    const selectedIds = Array.from(CREATE_SELECTED_TABLE_IDS);
+    if(selectedIds.length === 0){
+      alert("Διάλεξε τουλάχιστον 1 τραπέζι.");
+      return;
+    }
+
+    // derive tokens for client precheck from table ids
+    const selectedTokens = selectedIds
+      .map(id => TABLES.find(t => t.table_id === id))
+      .filter(Boolean)
+      .map(t => String(t.label));
+
+    const pre = precheckClientConflict(selectedTokens, startHH, endHH);
+    if(pre){
+      alert(pre + ` (gap ${GAP_MIN}’)`);
+      return;
+    }
+
+    let start_ts, end_ts;
+    try{
+      start_ts = toIsoLocal(dateKey, startHH);
+      end_ts = toIsoLocal(dateKey, endHH);
+    } catch(e){
+      alert("Λάθος ώρα/ημερομηνία.");
+      return;
+    }
+
+    setStatus("⏳ Creating reservation...", true);
+
+    // choose RPC: single vs multi
+    let rpcName = "rpc_create_reservation_from_grid";
+    let body = {
+      p_venue_id: CREATE_CTX.venue_id,
+      p_table_id: CREATE_CTX.table_id,
+      p_start_ts: start_ts,
+      p_end_ts: end_ts,
+      p_pax: pax,
+      p_name: name,
+      p_phone: phone,
+      p_note: note
+    };
+
+    if(selectedIds.length > 1){
+      rpcName = "rpc_create_reservation_multi";
+      body = {
+        p_venue_id: CREATE_CTX.venue_id,
+        p_table_ids: selectedIds,
+        p_start_ts: start_ts,
+        p_end_ts: end_ts,
+        p_pax: pax,
+        p_name: name,
+        p_phone: phone,
+        p_note: note
+      };
+    }
+
+    const { resp, json } = await postRpc(rpcName, body);
+
+    if(!resp.ok){
+      setRaw({ create_error: json, rpc: rpcName, body });
+      setStatus("<span class='bad'>CREATE failed.</span>");
+      const msg = json?.message || "CREATE failed";
+      alert(msg);
+      return;
+    }
+
+    setRaw({ create_ok: json, rpc: rpcName, body });
+    alert("✅ Reservation created");
+    closeCreate();
+    await refreshAll();
+    setStatus("✅ Loaded.", true);
+  }
+
+  // =========================
+  // GRID LOAD
+  // =========================
+  async function refreshAll(){
+    if(!ACCESS_TOKEN){ setStatus("<span class='bad'>Κάνε login πρώτα.</span>"); return; }
+    const c = cfg();
+    if(!c.dateKey || !/^\d{4}-\d{2}-\d{2}$/.test(c.dateKey)){
+      setStatus("<span class='bad'>Βάλε date_key σε μορφή YYYY-MM-DD.</span>", true);
+      return;
+    }
+
+    setStatus("⏳ Loading data...", true);
+
+    // v_floor_tables
+    const ftUrl = new URL(`${c.url}/rest/v1/v_floor_tables`);
+    ftUrl.searchParams.set("select", "venue_id,floor_id,floor_name,sort_order,table_id,label,area,seats,c,r,w,h,split_enabled,split_a_seats,split_b_seats");
+    ftUrl.searchParams.set("order", "sort_order.asc,r.asc,c.asc");
+
+    const ftResp = await fetch(ftUrl.toString(), {
+      headers: { "apikey": c.key, "Authorization": `Bearer ${ACCESS_TOKEN}` }
+    });
+    const ftJson = await ftResp.json();
+    if(!ftResp.ok){
+      setRaw({ v_floor_tables_error: ftJson });
+      setStatus("<span class='bad'>Δεν μπορώ να φορτώσω v_floor_tables.</span>");
+      return;
+    }
+    TABLES = Array.isArray(ftJson) ? ftJson : [];
+
+    const floorsMap = new Map();
+    TABLES.forEach(r => {
+      const k = r.floor_id;
+      if(!floorsMap.has(k)){
+        floorsMap.set(k, { floor_id:r.floor_id, floor_name:r.floor_name, sort_order:r.sort_order, venue_id:r.venue_id });
+      }
+    });
+    FLOORS = Array.from(floorsMap.values()).sort((a,b)=> (a.sort_order||0)-(b.sort_order||0));
+    if(!FLOORS.length){
+      setRaw({ cfg:c, floors:[], tables:[] });
+      setStatus("✅ Loaded (0 floors/tables).", true);
+      document.getElementById("grid").innerHTML = "";
+      document.getElementById("floorTabs").innerHTML = "";
+      return;
+    }
+    if(!ACTIVE_FLOOR_ID) ACTIVE_FLOOR_ID = FLOORS[0].floor_id;
+
+    // occupancy
+    const { resp: rpcResp, json: rpcJson } = await postRpc("rpc_grid_occupancy", {
+      p_venue_id: FLOORS[0].venue_id,
+      p_date_key: c.dateKey,
+      p_start_hhmm: c.startHH,
+      p_end_hhmm: c.endHH
+    });
+
+    if(!rpcResp.ok){
+      setRaw({ cfg:c, rpc_error: rpcJson });
+      setStatus("<span class='bad'>Δεν μπορώ να τρέξω rpc_grid_occupancy.</span>");
+      return;
+    }
+
+    OCC = Array.isArray(rpcJson) ? rpcJson : [];
+    setRaw({ cfg:c, floors:FLOORS, tables:TABLES, occupancy:OCC });
+
+    renderTabs();
+    renderGrid();
+    setStatus("✅ Loaded.", true);
+
+    if(TABLE_MODAL) renderTableModalFromCache();
+  }
+
+  function renderTabs(){
+    const tabs = document.getElementById("floorTabs");
+    tabs.innerHTML = "";
+    FLOORS.forEach(f => {
+      const d = document.createElement("div");
+      d.className = "tab" + (f.floor_id === ACTIVE_FLOOR_ID ? " active" : "");
+      d.textContent = f.floor_name;
+      d.onclick = () => { ACTIVE_FLOOR_ID = f.floor_id; renderTabs(); renderGrid(); };
+      tabs.appendChild(d);
+    });
+  }
+
+  function pickDefaultRow(rows){
+    const arrived = rows.find(r => r.status === "ARRIVED");
+    return arrived || rows[0];
+  }
+
+  function renderGrid(){
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    const rows = TABLES.filter(t => t.floor_id === ACTIVE_FLOOR_ID);
+
+    const byTok = new Map();
+    for(const o of OCC){
+      const key = String(o.table_token);
+      if(!byTok.has(key)) byTok.set(key, []);
+      byTok.get(key).push(o);
+    }
+
+    let occupiedCount = 0;
+    rows.forEach(t => { if(byTok.has(String(t.label))) occupiedCount++; });
+
+    document.getElementById("metaLine").textContent =
+      `Floor: ${FLOORS.find(x=>x.floor_id===ACTIVE_FLOOR_ID)?.floor_name || ""}`;
+    document.getElementById("counts").textContent =
+      `${occupiedCount} occupied / ${rows.length} tables`;
+
+    rows.forEach(t => {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.style.gridColumn = `${t.c} / span ${t.w}`;
+      cell.style.gridRow = `${t.r} / span ${t.h}`;
+
+      const tok = String(t.label);
+      const occRows = byTok.get(tok) || null;
+
+      const card = document.createElement("div");
+      card.className = "tableCard";
+
+      const top = document.createElement("div");
+      top.className = "tTop";
+
+      const left = document.createElement("div");
+      left.innerHTML = `<div class="tNo">${escapeHtml(tok)}</div><div class="tSeats">${escapeHtml(String(t.seats||""))} άτομα</div>`;
+
+      const right = document.createElement("div");
+      right.className = "rightBox";
+
+      top.appendChild(left);
+      top.appendChild(right);
+      card.appendChild(top);
+
+      if(!occRows){
+        const badge = document.createElement("div");
+        badge.className = "badge free";
+        badge.textContent = "FREE";
+        right.appendChild(badge);
+
+        const tiny = document.createElement("div");
+        tiny.className = "tiny";
+        tiny.textContent = "Πατάς για νέα κράτηση";
+        card.appendChild(tiny);
+
+        card.onclick = () => openCreateModalForTable(t);
+
+        cell.appendChild(card);
+        grid.appendChild(cell);
+        return;
+      }
+
+      const rowsSorted = [...occRows].sort((a,b)=>{
+        if(a.status === b.status) return 0;
+        if(a.status === "ARRIVED") return -1;
+        if(b.status === "ARRIVED") return 1;
+        return 0;
+      });
+
+      let selected = null;
+      const savedRid = SELECTED_RID.get(tok);
+      if(savedRid){
+        selected = rowsSorted.find(r => r.reservation_id === savedRid) || null;
+      }
+      if(!selected){
+        selected = pickDefaultRow(rowsSorted);
+        SELECTED_RID.set(tok, selected.reservation_id);
+      }
+
+      if(rowsSorted.length > 1){
+        const sel = document.createElement("select");
+        sel.className = "miniSelect";
+        rowsSorted.forEach((r, i)=>{
+          const opt = document.createElement("option");
+          opt.value = r.reservation_id;
+          opt.textContent = `#${i+1}`;
+          if(r.reservation_id === selected.reservation_id) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        sel.onchange = () => { SELECTED_RID.set(tok, sel.value); renderGrid(); };
+        sel.onclick = (e)=> e.stopPropagation();
+        right.appendChild(sel);
+      }
+
+      const badge = document.createElement("div");
+      badge.className = "badge " + badgeClassForStatus(selected.status);
+      badge.textContent = selected.status;
+      right.appendChild(badge);
+
+      const line = document.createElement("div");
+      line.className = "line " + (selected.status === "ARRIVED" ? "arrived" : "pending");
+      line.textContent = `${selected.start_hhmm}-${selected.end_hhmm} ${selected.name} (${selected.pax})`;
+      card.appendChild(line);
+
+      const hint = document.createElement("div");
+      hint.className = "tiny";
+      hint.textContent = rowsSorted.length > 1 ? `${rowsSorted.length} κρατήσεις • διάλεξε # ή άνοιξε List` : `Πατάς για List ή NEW`;
+      card.appendChild(hint);
+
+      const actions = document.createElement("div");
+      actions.className = "actionsRow";
+
+      const btnNew = document.createElement("button");
+      btnNew.className = "btn small ghost";
+      btnNew.textContent = "NEW";
+      btnNew.onclick = (e)=>{ e.stopPropagation(); openCreateModalForTable(t); };
+
+      const btnArr = document.createElement("button");
+      btnArr.className = "btn small ok";
+      btnArr.textContent = "ARRIVED";
+      btnArr.disabled = !canAction(selected.status, "ARRIVED");
+      btnArr.onclick = (e) => { e.stopPropagation(); runAction(selected.reservation_id, "ARRIVED"); };
+
+      const btnEnd = document.createElement("button");
+      btnEnd.className = "btn small dark";
+      btnEnd.textContent = "END";
+      btnEnd.disabled = !canAction(selected.status, "END");
+      btnEnd.onclick = (e) => { e.stopPropagation(); runAction(selected.reservation_id, "END"); };
+
+      const btnNo = document.createElement("button");
+      btnNo.className = "btn small warn";
+      btnNo.textContent = "NO_SHOW";
+      btnNo.disabled = !canAction(selected.status, "NO_SHOW");
+      btnNo.onclick = (e) => { e.stopPropagation(); runAction(selected.reservation_id, "NO_SHOW"); };
+
+      const btnCan = document.createElement("button");
+      btnCan.className = "btn small danger";
+      btnCan.textContent = "CANCEL";
+      btnCan.disabled = !canAction(selected.status, "CANCEL");
+      btnCan.onclick = (e) => { e.stopPropagation(); runAction(selected.reservation_id, "CANCEL"); };
+
+      const btnList = document.createElement("button");
+      btnList.className = "btn small ghost";
+      btnList.textContent = "List";
+      btnList.onclick = (e)=>{ e.stopPropagation(); openTableModal(tok); };
+
+      actions.appendChild(btnNew);
+      actions.appendChild(btnArr);
+      actions.appendChild(btnEnd);
+      actions.appendChild(btnNo);
+      actions.appendChild(btnCan);
+      actions.appendChild(btnList);
+
+      card.appendChild(actions);
+
+      card.onclick = () => openTableModal(tok);
+
+      cell.appendChild(card);
+      grid.appendChild(cell);
+    });
+  }
+
+  // =========================
+  // INIT
+  // =========================
+  window.addEventListener("load", () => {
+    initMainTimeSelectors();
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    document.getElementById("dateKey").value = `${yyyy}-${mm}-${dd}`;
+  });
+</script>
+
+</body>
+</html>
